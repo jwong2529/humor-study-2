@@ -5,7 +5,7 @@ import AuthButton from '@/components/AuthButton'
 export default async function UsersPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: profiles, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+    const { data: profiles, error } = await supabase.from('profiles').select('*').order('created_datetime_utc', { ascending: false })
 
     return (
         <div className="min-h-screen bg-[#0f172a] text-slate-200">
@@ -54,7 +54,7 @@ export default async function UsersPage() {
                                             )}
                                         </td>
                                         <td className="p-4 text-xs text-slate-500">
-                                            {profile.created_at ? new Date(profile.created_at).toLocaleString() : 'Unknown'}
+                                            {profile.created_datetime_utc ? new Date(profile.created_datetime_utc).toLocaleString() : 'Unknown'}
                                         </td>
                                     </tr>
                                 ))}
