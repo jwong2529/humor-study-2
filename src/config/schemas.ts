@@ -1,4 +1,18 @@
-export const tableSchemas = {
+export interface Column {
+  key: string
+  label: string
+  type: 'text' | 'number' | 'boolean' | 'date' | 'textarea'
+  mono?: boolean
+  hideInForm?: boolean
+}
+
+export interface TableSchema {
+  name: string
+  readOnly: boolean
+  columns: Column[]
+}
+
+export const tableSchemas: Record<string, TableSchema> = {
   profiles: {
     name: 'Profiles',
     readOnly: true,
