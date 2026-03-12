@@ -1,152 +1,142 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
-import Link from 'next/link'
-import AuthButton from '@/components/AuthButton'
 import { useState, useEffect } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import CRUDComponent from '@/components/CRUDComponent'
+import { Upload, Loader2, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export default function ImagesPage() {
+    const [file, setFile] = useState<File | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [status, setStatus] = useState<string>('')
+    const [error, setError] = useState<string | null>(null)
     const [user, setUser] = useState<any>(null)
-    const [images, setImages] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<any>(null)
-
-    const [newUrl, setNewUrl] = useState('')
-    const [editingId, setEditingId] = useState<string | null>(null)
-    const [editUrl, setEditUrl] = useState('')
 
     const supabase = createClient()
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data }) => setUser(data.user))
-        fetchImages()
-    }, [])
+    }, [supabase])
 
-    const fetchImages = async () => {
-        setLoading(true)
-        const { data, error } = await supabase.from('images').select('*').order('created_datetime_utc', { ascending: false })
-        if (error) setError(error.message)
-        else setImages(data || [])
-        setLoading(false)
-    }
-
-    const handleCreate = async () => {
-        if (!newUrl) return
-        const { error } = await supabase.from('images').insert([{
-            url: newUrl,
-            is_public: true,
-            profile_id: user.id
-        }])
-        if (error) alert(error.message)
-        else {
-            setNewUrl('')
-            fetchImages()
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0])
+            setError(null)
+            setStatus('')
         }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this image?')) return
-        const { error } = await supabase.from('images').delete().eq('id', id)
-        if (error) alert(error.message)
-        else fetchImages()
-    }
+    const handleUploadToPipeline = async () => {
+        if (!file || !user) return
+        setUploading(true)
+        setError(null)
+        setStatus('Generating upload URL...')
 
-    const handleUpdate = async () => {
-        if (!editingId || !editUrl) return
-        const { error } = await supabase.from('images').update({ url: editUrl }).eq('id', editingId)
-        if (error) alert(error.message)
-        else {
-            setEditingId(null)
-            setEditUrl('')
-            fetchImages()
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) throw new Error("Auth session missing")
+            const token = session.access_token
+
+            // Step 1: Generate presigned URL
+            const presignedRes = await fetch('https://api.almostcrackd.ai/pipeline/generate-presigned-url', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contentType: file.type })
+            })
+
+            if (!presignedRes.ok) throw new Error("Failed to get upload URL")
+            const { presignedUrl, cdnUrl } = await presignedRes.json()
+
+            // Step 2: Upload to S3
+            setStatus('Uploading to S3...')
+            const uploadRes = await fetch(presignedUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type },
+                body: file
+            })
+
+            if (!uploadRes.ok) throw new Error("Failed to upload to S3")
+
+            // Step 3: Register in Pipeline
+            setStatus('Registering in pipeline...')
+            const registerRes = await fetch('https://api.almostcrackd.ai/pipeline/upload-image-from-url', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false })
+            })
+
+            if (!registerRes.ok) throw new Error("Failed to register image")
+            
+            setStatus('Success! Image registered.')
+            setFile(null)
+            // Trigger a refresh of the CRUD table if we had a way, but since it's separate components, 
+            // the user might need to refresh or we could use a key.
+            window.location.reload() 
+
+        } catch (err: any) {
+            setError(err.message)
+            setStatus('')
+        } finally {
+            setUploading(false)
         }
-    }
-
-    const editMode = (id: string, currentUrl: string) => {
-        setEditingId(id)
-        setEditUrl(currentUrl)
     }
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-slate-200">
-            <nav className="w-full bg-[#1e293b] border-b border-slate-700/50 flex justify-between items-center p-6">
-                <div>
-                    <h1 className="text-2xl font-black text-white px-2">Humor Study Admin</h1>
+        <main className="p-8 max-w-7xl mx-auto space-y-12">
+            <section className="bg-[#1e293b] border border-slate-700 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <Upload className="w-32 h-32" />
                 </div>
-                <div className="flex items-center gap-6">
-                    <Link href="/" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Dashboard</Link>
-                    <Link href="/users" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Users</Link>
-                    <Link href="/images" className="text-white transition-colors text-sm font-medium">Images</Link>
-                    <Link href="/captions" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Captions</Link>
-                    <AuthButton user={user} />
-                </div>
-            </nav>
-            <main className="p-8 max-w-7xl mx-auto space-y-8">
-                <h2 className="text-xl font-bold">Manage Images</h2>
+                
+                <div className="relative z-10 space-y-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                            <Upload className="w-6 h-6 text-blue-400" />
+                            Upload to Pipeline
+                        </h2>
+                        <p className="text-slate-400 text-sm">Register new images directly into the AI processing pipeline</p>
+                    </div>
 
-                {/* Create new image form */}
-                <div className="bg-[#1e293b] border border-slate-700 p-6 rounded-2xl flex gap-4 items-center">
-                    <input
-                        type="text"
-                        placeholder="New Image URL..."
-                        value={newUrl}
-                        onChange={(e) => setNewUrl(e.target.value)}
-                        className="flex-1 bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg"
-                    />
-                    <button
-                        onClick={handleCreate}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                    >
-                        Add Image
-                    </button>
-                </div>
-
-                {error && <div className="text-red-500 font-bold p-4 bg-red-900/20 rounded-xl">{error}</div>}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {loading ? (
-                        <p>Loading...</p>
-                    ) : (
-                        images.map(img => (
-                            <div key={img.id} className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden hover:border-slate-500 transition-colors">
-                                <div className="w-full h-48 bg-black relative">
-                                    <img src={img.url} alt="Humor" className="w-full h-full object-contain pointer-events-none" />
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <label className="flex-1 w-full">
+                            <div className="border-2 border-dashed border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-blue-500/50 transition-all rounded-2xl p-4 flex items-center justify-center cursor-pointer group">
+                                <div className="flex items-center gap-3">
+                                    <Sparkles className="w-5 h-5 text-slate-500 group-hover:text-blue-400" />
+                                    <span className="text-slate-400 text-sm font-medium group-hover:text-slate-200">
+                                        {file ? file.name : 'Select image file...'}
+                                    </span>
                                 </div>
-                                <div className="p-4 space-y-4">
-                                    {editingId === img.id ? (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={editUrl}
-                                                onChange={(e) => setEditUrl(e.target.value)}
-                                                className="flex-1 text-sm bg-slate-900 text-white border border-slate-600 px-2 py-1 rounded"
-                                            />
-                                            <button onClick={handleUpdate} className="bg-green-600 text-xs px-2 py-1 rounded font-bold text-white">Save</button>
-                                            <button onClick={() => setEditingId(null)} className="bg-slate-600 text-xs px-2 py-1 rounded font-bold text-white">Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <div className="text-xs text-slate-400 truncate break-all" title={img.url}>{img.url}</div>
-                                    )}
-
-                                    <div className="flex justify-between items-center text-xs">
-                                        <span className="bg-slate-700 text-slate-300 font-mono px-2 py-1 rounded uppercase">
-                                            ID: {img.id.substring(0, 8)}
-                                        </span>
-                                        <div className="flex gap-2">
-                                            {editingId !== img.id && (
-                                                <>
-                                                    <button onClick={() => editMode(img.id, img.url)} className="text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase">Edit</button>
-                                                    <button onClick={() => handleDelete(img.id)} className="text-red-400 font-bold hover:text-red-300 transition-colors uppercase">Delete</button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                             </div>
-                        ))
+                        </label>
+                        
+                        <button
+                            onClick={handleUploadToPipeline}
+                            disabled={!file || uploading}
+                            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-8 py-4 rounded-2xl font-black transition-all shadow-xl shadow-blue-500/20 flex items-center gap-2 shrink-0"
+                        >
+                            {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                            Run Pipeline
+                        </button>
+                    </div>
+
+                    {status && (
+                        <div className="flex items-center gap-2 text-green-400 text-sm font-bold bg-green-500/10 p-3 rounded-xl border border-green-500/20">
+                            <CheckCircle2 className="w-4 h-4" />
+                            {status}
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="flex items-center gap-2 text-red-400 text-sm font-bold bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+                            <AlertCircle className="w-4 h-4" />
+                            {error}
+                        </div>
                     )}
                 </div>
-            </main>
-        </div>
+            </section>
+
+            <CRUDComponent tableKey="images" />
+        </main>
     )
 }

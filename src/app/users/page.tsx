@@ -8,20 +8,7 @@ export default async function UsersPage() {
     const { data: profiles, error } = await supabase.from('profiles').select('*').order('created_datetime_utc', { ascending: false })
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-slate-200">
-            <nav className="w-full bg-[#1e293b] border-b border-slate-700/50 flex justify-between items-center p-6">
-                <div>
-                    <h1 className="text-2xl font-black text-white px-2">Humor Study Admin</h1>
-                </div>
-                <div className="flex items-center gap-6">
-                    <Link href="/" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Dashboard</Link>
-                    <Link href="/users" className="text-white transition-colors text-sm font-medium">Users</Link>
-                    <Link href="/images" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Images</Link>
-                    <Link href="/captions" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Captions</Link>
-                    <AuthButton user={user} />
-                </div>
-            </nav>
-            <main className="p-8 max-w-7xl mx-auto space-y-8">
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
                 <h2 className="text-xl font-bold">Users Directory</h2>
                 {error ? (
                     <div className="p-4 bg-red-900/20 text-red-200 border border-red-500/50 rounded-xl">Error: {error.message}</div>
@@ -63,7 +50,6 @@ export default async function UsersPage() {
                         </table>
                     </div>
                 )}
-            </main>
         </div>
     )
 }

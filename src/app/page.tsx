@@ -52,24 +52,16 @@ export default async function AdminDashboard() {
     .slice(0, 5)
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200">
-      <nav className="w-full bg-[#1e293b] border-b border-slate-700/50 flex justify-between items-center p-6 sticky top-0 z-50 shadow-lg">
+    <div className="p-8 max-w-7xl mx-auto space-y-12">
+      <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-black text-white px-2">Humor Study Admin</h1>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-white transition-colors text-sm font-medium">Dashboard</Link>
-          <Link href="/users" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Users</Link>
-          <Link href="/images" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Images</Link>
-          <Link href="/captions" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Captions</Link>
-          <AuthButton user={user} />
-        </div>
-      </nav>
-      <main className="p-8 max-w-7xl mx-auto space-y-12">
-        <header>
           <h2 className="text-3xl font-black tracking-tight text-white mb-2">Dashboard Overview</h2>
           <p className="text-slate-400">Welcome to the Humor Study Data Center</p>
-        </header>
+        </div>
+        <div className="pb-2">
+           <AuthButton user={user} />
+        </div>
+      </header>
 
         {/* Global Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -121,7 +113,6 @@ export default async function AdminDashboard() {
             {!topCaptions?.length && <p className="text-slate-500 col-span-full">No captions yet.</p>}
           </div>
         </div>
-      </main>
     </div>
   )
 }
