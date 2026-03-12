@@ -119,30 +119,31 @@ export const tableSchemas = {
       { key: 'apex_domain', label: 'Domain', type: 'text' },
     ]
   },
-  humor_mix: {
+  humor_flavor_mix: {
     name: 'Humor Mix',
     readOnly: false,
     columns: [
       { key: 'id', label: 'ID', type: 'text', mono: true, hideInForm: true },
-      { key: 'name', label: 'Name', type: 'text' },
-      { key: 'settings', label: 'Settings', type: 'textarea' },
+      { key: 'humor_flavor_id', label: 'Flavor ID', type: 'text' },
+      { key: 'caption_count', label: 'Caption Count', type: 'number' },
     ]
   },
-  llm_responses: {
+  llm_model_responses: {
     name: 'LLM Responses',
     readOnly: true,
     columns: [
       { key: 'id', label: 'ID', type: 'text', mono: true },
-      { key: 'content', label: 'Content', type: 'textarea' },
+      { key: 'llm_model_response', label: 'Response', type: 'textarea' },
+      { key: 'llm_model_id', label: 'Model ID', type: 'text' },
       { key: 'created_datetime_utc', label: 'Created', type: 'date' },
     ]
   },
-  whitelisted_emails: {
+  whitelist_email_addresses: {
     name: 'Whitelisted Emails',
     readOnly: false,
     columns: [
       { key: 'id', label: 'ID', type: 'text', mono: true, hideInForm: true },
-      { key: 'email', label: 'Email Address', type: 'text' },
+      { key: 'email_address', label: 'Email Address', type: 'text' },
     ]
   },
 }

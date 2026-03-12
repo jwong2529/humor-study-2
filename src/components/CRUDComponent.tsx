@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Plus, Pencil, Trash2, Save, X, Loader2, ChevronRight } from 'lucide-react'
 import { tableSchemas } from '@/config/schemas'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 interface CRUDProps {
   tableKey: keyof typeof tableSchemas
