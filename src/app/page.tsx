@@ -56,7 +56,7 @@ export default async function AdminDashboard() {
       <header className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-white mb-2">Dashboard Overview</h2>
-          <p className="text-slate-400">Welcome to the Humor Study Data Center</p>
+          <p className="text-slate-400">Welcome to the Humor Study</p>
         </div>
         <div className="pb-2">
            <AuthButton user={user} />
