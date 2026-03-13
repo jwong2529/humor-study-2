@@ -21,12 +21,12 @@ export default async function CaptionsPage() {
         .limit(100) // limit for performance in the admin panel
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
+        <div className="p-8 w-full mx-auto space-y-8">
                 <h2 className="text-xl font-bold">List of Captions (Latest 100)</h2>
                 {error ? (
                     <div className="p-4 bg-red-900/20 text-red-200 border border-red-500/50 rounded-xl">Error: {error.message}</div>
                 ) : (
-                    <div className="bg-[#1e293b] border border-slate-700 rounded-2xl flex flex-col gap-0 divide-y divide-slate-700 max-h-[70vh] overflow-y-auto">
+                    <div className="bg-[#1e293b] border border-slate-700 rounded-2xl flex flex-col gap-0 divide-y divide-slate-700 max-h-[85vh] overflow-y-auto">
                         {captions?.map((caption: any) => (
                             <div key={caption.id} className="p-6 flex flex-col md:flex-row gap-6 hover:bg-slate-800 transition-colors items-center">
                                 <div className="w-full md:w-48 h-32 bg-slate-900 border border-slate-700 rounded-xl flex-shrink-0 relative">

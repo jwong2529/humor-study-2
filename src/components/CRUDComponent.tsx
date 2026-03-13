@@ -105,7 +105,7 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center">
+      <header className="flex justify-between items-center gap-6">
         <div>
           <h2 className="text-2xl font-black text-white">{schema.name}</h2>
           <p className="text-sm text-slate-400">Manage your {schema.name.toLowerCase()} records</p>
