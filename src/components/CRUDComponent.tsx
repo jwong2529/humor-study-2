@@ -78,9 +78,23 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
 
   const handleSave = async () => {
     setLoading(true)
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('You must be logged in to perform this action.')
+      setLoading(false)
+      return
+    }
+
+    const payload = { ...formData }
+    payload.modified_by_user_id = user.id
+    if (!editingId) {
+      payload.created_by_user_id = user.id
+    }
+
     const { error } = editingId 
-      ? await supabase.from(tableKey as string).update(formData).eq('id', editingId)
-      : await supabase.from(tableKey as string).insert([formData])
+      ? await supabase.from(tableKey as string).update(payload).eq('id', editingId)
+      : await supabase.from(tableKey as string).insert([payload])
 
     if (error) {
       alert(error.message)
