@@ -18,7 +18,7 @@ export default async function AdminDashboard() {
   const { data: topCaptions } = await supabase
     .from('captions')
     .select(`
-      id, content, like_count, images(url), profiles(email)
+      id, content, like_count, images(url), profiles!profile_id(email)
     `)
     .order('like_count', { ascending: false })
     .limit(5)
@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
   // 4. Top users for Bar Chart
   const { data: allCaptionsWithProfiles } = await supabase
     .from('captions')
-    .select(`profile_id, profiles(email)`)
+    .select(`profile_id, profiles!profile_id(email)`)
 
   const userCaptionCount: Record<string, { email: string, count: number }> = {}
   allCaptionsWithProfiles?.forEach(cap => {

@@ -11,7 +11,7 @@ export default function DashboardCharts({ topUsers, imageStats }: { topUsers: an
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700"
+                className="bg-slate-800/50 pt-6 px-6 pb-10 rounded-2xl border border-slate-700"
             >
                 <h3 className="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest">Top Contributors (Captions)</h3>
                 <div className="h-64">
@@ -34,7 +34,7 @@ export default function DashboardCharts({ topUsers, imageStats }: { topUsers: an
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700"
+                className="bg-slate-800/50 pt-6 px-6 pb-10 rounded-2xl border border-slate-700"
             >
                 <h3 className="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest">Image Public vs Private</h3>
                 <div className="h-64">
@@ -56,14 +56,14 @@ export default function DashboardCharts({ topUsers, imageStats }: { topUsers: an
                             <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }} />
                         </PieChart>
                     </ResponsiveContainer>
-                    <div className="flex justify-center gap-4 mt-2">
-                        {imageStats.map((entry, index) => (
-                            <div key={entry.name} className="flex gap-2 items-center text-xs text-slate-400">
-                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                                {entry.name}: {entry.value}
-                            </div>
-                        ))}
-                    </div>
+                </div>
+                <div className="flex justify-center gap-4 mt-6">
+                    {imageStats.map((entry, index) => (
+                        <div key={entry.name} className="flex gap-2 items-center text-xs text-slate-400">
+                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                            {entry.name}: {entry.value}
+                        </div>
+                    ))}
                 </div>
             </motion.div>
         </div>

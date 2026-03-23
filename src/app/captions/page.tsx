@@ -13,7 +13,7 @@ export default async function CaptionsPage() {
       images (
         url
       ),
-      profiles (
+      profiles!profile_id (
         email
       )
     `)

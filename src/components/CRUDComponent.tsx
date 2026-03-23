@@ -24,6 +24,11 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<any>({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const supabase = createClient()
 
@@ -234,7 +239,7 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
                             <span className="bg-slate-500/10 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">No</span>
                           )
                         ) : col.type === 'date' ? (
-                          <span className="text-xs text-slate-500">{item[col.key] ? new Date(item[col.key]).toLocaleDateString() : 'N/A'}</span>
+                          <span className="text-xs text-slate-500">{mounted && item[col.key] ? new Date(item[col.key]).toLocaleDateString() : (item[col.key] ? 'Loading...' : 'N/A')}</span>
                         ) : (
                           <div className={cn("max-w-[200px] truncate", col.mono && "font-mono text-xs text-blue-400")}>
                             {item[col.key]?.toString() || '-'}
