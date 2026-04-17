@@ -42,7 +42,8 @@ export default async function AnalyticsPage() {
     // Flavor Stats
     const flavorStatsMap: Record<string, { totalLikes: number, count: number, slug: string }> = {}
     captions?.forEach(cap => {
-        const flavor = cap.humor_flavors?.slug || 'Unknown'
+        const flavorData = cap.humor_flavors as any
+        const flavor = (Array.isArray(flavorData) ? flavorData[0]?.slug : flavorData?.slug) || 'Unknown'
         if (!flavorStatsMap[flavor]) flavorStatsMap[flavor] = { totalLikes: 0, count: 0, slug: flavor }
         flavorStatsMap[flavor].totalLikes += (cap.like_count || 0)
         flavorStatsMap[flavor].count += 1
@@ -58,7 +59,9 @@ export default async function AnalyticsPage() {
     const imageStatsMap: Record<string, { totalLikes: number, count: number, url: string }> = {}
     captions?.forEach(cap => {
         const imgId = cap.image_id || 'None'
-        if (!imageStatsMap[imgId]) imageStatsMap[imgId] = { totalLikes: 0, count: 0, url: cap.images?.url || '' }
+        const imageData = cap.images as any
+        const imageUrl = (Array.isArray(imageData) ? imageData[0]?.url : imageData?.url) || ''
+        if (!imageStatsMap[imgId]) imageStatsMap[imgId] = { totalLikes: 0, count: 0, url: imageUrl }
         imageStatsMap[imgId].totalLikes += (cap.like_count || 0)
         imageStatsMap[imgId].count += 1
     })
