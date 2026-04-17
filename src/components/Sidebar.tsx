@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Image as ImageIcon, MessageSquare, 
   Sparkles, ListTree, Blend, Quote, HelpCircle, 
   Cpu, Database, Link as LinkIcon, Reply, 
-  Globe, Mail, FileText
+  Globe, Mail, FileText, BarChart3
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -18,6 +18,7 @@ function cn(...inputs: ClassValue[]) {
 const navItems = [
   { group: 'Main', items: [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Profiles', href: '/users', icon: Users },
     { name: 'Captions', href: '/captions', icon: FileText },
   ]},
