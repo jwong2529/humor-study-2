@@ -11,6 +11,7 @@ export default function ImagesPage() {
     const [status, setStatus] = useState<string>('')
     const [error, setError] = useState<string | null>(null)
     const [user, setUser] = useState<any>(null)
+    const [refreshKey, setRefreshKey] = useState(0)
 
     const supabase = createClient()
 
@@ -69,10 +70,7 @@ export default function ImagesPage() {
             
             setStatus('Success! Image registered.')
             setFile(null)
-            // Trigger a refresh of the CRUD table if we had a way, but since it's separate components, 
-            // the user might need to refresh or we could use a key.
-            window.location.reload() 
-
+            setRefreshKey(prev => prev + 1)
         } catch (err: any) {
             setError(err.message)
             setStatus('')
@@ -136,7 +134,7 @@ export default function ImagesPage() {
                 </div>
             </section>
 
-            <CRUDComponent tableKey="images" />
+            <CRUDComponent key={refreshKey} tableKey="images" />
         </main>
     )
 }
