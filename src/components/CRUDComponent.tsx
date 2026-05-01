@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { Plus, Pencil, Trash2, Save, X, Loader2, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, Save, X, Loader2, ChevronRight, ChevronLeft } from 'lucide-react'
 import { tableSchemas } from '@/config/schemas'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -17,6 +17,7 @@ interface CRUDProps {
 
 export default function CRUDComponent({ tableKey }: CRUDProps) {
   const schema = tableSchemas[tableKey]
+  const supabase = createClient()
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,36 +25,102 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<any>({})
+  const [isSuperadmin, setIsSuperadmin] = useState<boolean | null>(null)
   const [mounted, setMounted] = useState(false)
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [totalCount, setTotalCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const supabase = createClient()
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setCurrentPage(1) // Reset to page 1 on search
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase
+          .from('profiles')
+          .select('is_superadmin')
+          .eq('id', user.id)
+          .single()
+          .then(({ data }) => {
+            setIsSuperadmin(!!data?.is_superadmin)
+          })
+      } else {
+        setIsSuperadmin(false)
+      }
+    })
+  }, [supabase])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
+    const start = (currentPage - 1) * pageSize
+    const end = start + pageSize - 1
+
+    let query = supabase
       .from(tableKey as string)
-      .select('*')
+      .select('*', { count: 'exact' })
+
+    // Apply search if debouncedSearch exists
+    if (debouncedSearch) {
+      const searchableCols = schema.columns.filter(c => c.type === 'text' || c.type === 'textarea')
+      if (searchableCols.length > 0) {
+        const searchFilter = searchableCols.map(c => `${c.key}.ilike.%${debouncedSearch}%`).join(',')
+        query = query.or(searchFilter)
+      }
+    }
+
+    const { data, error, count } = await query
       .order('created_datetime_utc', { ascending: false })
-      .limit(100)
+      .range(start, end)
 
     if (error) {
        // fallback if created_datetime_utc doesn't exist
-       const { data: fallbackData, error: fallbackError } = await supabase
+       let fallbackQuery = supabase
          .from(tableKey as string)
-         .select('*')
-         .limit(100)
+         .select('*', { count: 'exact' })
        
-       if (fallbackError) setError(fallbackError.message)
-       else setData(fallbackData || [])
+       if (debouncedSearch) {
+         const searchableCols = schema.columns.filter(c => c.type === 'text' || c.type === 'textarea')
+         if (searchableCols.length > 0) {
+           const searchFilter = searchableCols.map(c => `${c.key}.ilike.%${debouncedSearch}%`).join(',')
+           fallbackQuery = fallbackQuery.or(searchFilter)
+         }
+       }
+
+       const { data: fallbackData, error: fallbackError, count: fallbackCount } = await fallbackQuery
+         .range(start, end)
+       
+       if (fallbackError) {
+         setError(fallbackError.message)
+       } else {
+         setData(fallbackData || [])
+         setTotalCount(fallbackCount || 0)
+       }
     } else {
       setData(data || [])
+      setTotalCount(count || 0)
     }
     setLoading(false)
-  }, [tableKey, supabase])
+  }, [tableKey, supabase, currentPage, pageSize, debouncedSearch, schema.columns])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [tableKey])
 
   useEffect(() => {
     fetchData()
@@ -122,22 +189,53 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
     }
   }
 
+  if (isSuperadmin === false) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center bg-slate-900/50 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+        <h3 className="text-2xl font-black text-white mb-2">Access Denied</h3>
+        <p className="text-slate-400">You must be a superadmin to view or manage these records.</p>
+      </div>
+    )
+  }
+
+  if (isSuperadmin === null) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center gap-6">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h2 className="text-2xl font-black text-white">{schema.name}</h2>
-          <p className="text-sm text-slate-400">Manage your {schema.name.toLowerCase()} records</p>
+          <h2 className="text-3xl font-black text-white tracking-tight">{schema.name}</h2>
+          <p className="text-sm text-slate-400 font-medium">Manage your {schema.name.toLowerCase()} records</p>
         </div>
-        {!schema.readOnly && !isAdding && (
-          <button 
-            onClick={startAdd}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            Add New
-          </button>
-        )}
+        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
+          <div className="relative flex-1 sm:w-64">
+            <input 
+              type="text"
+              placeholder={`Search ${schema.name}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-800/50 border border-slate-700 rounded-xl pl-4 pr-10 py-2.5 text-sm text-white focus:border-blue-500 outline-none transition-all"
+            />
+            {loading && (
+               <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-3 text-slate-500" />
+            )}
+          </div>
+          {!schema.readOnly && !isAdding && (
+            <button 
+              onClick={startAdd}
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              Add New
+            </button>
+          )}
+        </div>
       </header>
 
       {error && (
@@ -268,6 +366,35 @@ export default function CRUDComponent({ tableKey }: CRUDProps) {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination UI */}
+        <div className="p-4 bg-slate-800/50 border-t border-slate-700 flex items-center justify-between">
+          {totalCount > 0 ? (
+            <p className="text-xs text-slate-400">
+              Showing <span className="font-bold text-slate-200">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-bold text-slate-200">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-bold text-slate-200">{totalCount}</span> records
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400">No records to display</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1 || loading}
+              className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-30 transition-all text-slate-300"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => (prev * pageSize < totalCount ? prev + 1 : prev))}
+              disabled={currentPage * pageSize >= totalCount || loading}
+              className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-30 transition-all text-slate-300"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

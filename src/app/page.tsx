@@ -8,12 +8,23 @@ export default async function AdminDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Get totals
-  const [{ count: userCount }, { count: imageCount }, { data: allLikes }] = await Promise.all([
+  // 1. Get totals and check authorization
+  const [{ count: userCount }, { count: imageCount }, { data: allLikes }, { data: profile }] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('images').select('*', { count: 'exact', head: true }),
-    supabase.from('captions').select('like_count')
+    supabase.from('captions').select('like_count'),
+    supabase.from('profiles').select('is_superadmin').eq('id', user?.id).single()
   ])
+
+  if (!profile?.is_superadmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-[#0f172a]">
+        <h1 className="text-4xl font-black text-white mb-4">Unauthorized</h1>
+        <p className="text-slate-400 mb-8">You do not have administrative privileges to access this area.</p>
+        <AuthButton user={user} />
+      </div>
+    )
+  }
 
   const captionCount = allLikes?.length || 0
   const sumLikes = allLikes?.reduce((acc, cap) => acc + (cap.like_count || 0), 0) || 0
