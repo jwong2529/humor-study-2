@@ -1,7 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import AuthButton from '@/components/AuthButton'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileText, Calendar, Hash, User as UserIcon } from 'lucide-react'
 
 export default async function CaptionsPage({
     searchParams,
@@ -13,7 +12,7 @@ export default async function CaptionsPage({
     
     const params = await searchParams
     const page = parseInt(params.page || '1')
-    const pageSize = 10
+    const pageSize = 12
     const start = (page - 1) * pageSize
     const end = start + pageSize - 1
 
@@ -35,58 +34,116 @@ export default async function CaptionsPage({
     const totalPages = Math.ceil(totalCount / pageSize)
 
     return (
-        <div className="p-8 w-full mx-auto space-y-8 flex flex-col h-screen">
-            <div className="flex justify-between items-center flex-shrink-0">
-                <h2 className="text-xl font-bold">List of Captions ({totalCount} Total)</h2>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href={`/captions?page=${Math.max(1, page - 1)}`}
-                            className={`p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-all ${page <= 1 ? 'pointer-events-none opacity-30' : ''}`}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </Link>
-                        <span className="text-sm font-medium text-slate-400">
-                            Page <span className="text-white">{page}</span> of {totalPages || 1}
-                        </span>
-                        <Link
-                            href={`/captions?page=${page + 1}`}
-                            className={`p-2 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-all ${page >= totalPages ? 'pointer-events-none opacity-30' : ''}`}
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </Link>
+        <main className="p-8 space-y-12 max-w-[1600px] mx-auto animate-in fade-in duration-700">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                            <FileText className="w-6 h-6 text-white" />
+                        </div>
+                        <h1 className="text-4xl font-black text-white tracking-tight">Captions Library</h1>
                     </div>
+                    <p className="text-slate-400 font-medium ml-[3.75rem]">Discovering the linguistics of humor ({totalCount} total entries)</p>
                 </div>
-            </div>
+
+                <div className="flex items-center gap-4 bg-slate-800/40 backdrop-blur-md p-2 rounded-2xl border border-slate-700/50 shadow-xl self-end">
+                    <Link
+                        href={`/captions?page=${Math.max(1, page - 1)}`}
+                        className={`p-2.5 rounded-xl bg-slate-700 hover:bg-blue-600 text-white transition-all shadow-lg active:scale-95 ${page <= 1 ? 'pointer-events-none opacity-20' : ''}`}
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </Link>
+                    <div className="px-4 text-center">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Page Status</p>
+                        <p className="text-sm font-bold text-white leading-none">
+                            {page} <span className="text-slate-500 mx-1">/</span> {totalPages || 1}
+                        </p>
+                    </div>
+                    <Link
+                        href={`/captions?page=${page + 1}`}
+                        className={`p-2.5 rounded-xl bg-slate-700 hover:bg-blue-600 text-white transition-all shadow-lg active:scale-95 ${page >= totalPages ? 'pointer-events-none opacity-20' : ''}`}
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </Link>
+                </div>
+            </header>
 
             {error ? (
-                <div className="p-4 bg-red-900/20 text-red-200 border border-red-500/50 rounded-xl">Error: {error.message}</div>
+                <div className="p-8 bg-red-900/20 text-red-400 border border-red-500/50 rounded-[2rem] flex items-center gap-4">
+                    <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Hash className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-black uppercase text-xs tracking-widest">Database Error</p>
+                      <p className="text-sm font-medium">{error.message}</p>
+                    </div>
+                </div>
             ) : (
-                <div className="bg-[#1e293b] border border-slate-700 rounded-2xl flex flex-col gap-0 divide-y divide-slate-700 flex-1 overflow-y-auto min-h-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     {captions?.map((caption: any) => (
-                        <div key={caption.id} className="p-6 flex flex-col md:flex-row gap-6 hover:bg-slate-800 transition-colors items-center">
-                            <div className="w-full md:w-48 h-32 bg-slate-900 border border-slate-700 rounded-xl flex-shrink-0 relative">
+                        <div key={caption.id} className="group bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-[2.5rem] overflow-hidden flex flex-col hover:bg-slate-800/60 hover:border-blue-500/50 transition-all duration-500 shadow-xl hover:shadow-blue-500/10">
+                            <div className="aspect-[4/3] bg-slate-900 relative overflow-hidden">
                                 {caption.images?.url ? (
-                                    <img src={caption.images.url} alt="Context" className="w-full h-full object-contain pointer-events-none" />
+                                    <img 
+                                        src={caption.images.url} 
+                                        alt="Contextual image" 
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                    />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-500 select-none">No Image</div>
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-700">
+                                        <Hash className="w-8 h-8 opacity-20" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">No Visual context</span>
+                                    </div>
                                 )}
-                            </div>
-                            <div className="flex-1 space-y-2">
-                                <div className="flex justify-between items-start">
-                                    <p className="text-sm font-bold bg-slate-700 px-2 py-1 uppercase font-mono tracking-widest rounded-md text-slate-300">
-                                        ID: {caption.id.substring(0, 8)}
+                                <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                                    <p className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                        <Hash className="w-3 h-3 text-blue-400" />
+                                        ID: {caption.id.substring(0, 6)}
                                     </p>
-                                    <p className="text-xs text-slate-500">{new Date(caption.created_datetime_utc).toLocaleString()}</p>
                                 </div>
-                                <p className="text-lg font-medium text-white">{caption.content || <i>No content</i>}</p>
-                                <p className="text-xs font-mono text-blue-400">Author: {caption.profiles?.email || caption.profile_id}</p>
+                            </div>
+                            <div className="p-8 flex-1 flex flex-col">
+                                <div className="flex-1 space-y-4">
+                                    <p className="text-xl font-black text-white leading-tight tracking-tight min-h-[3rem]">
+                                        {caption.content || <span className="opacity-20 italic">No text content</span>}
+                                    </p>
+                                    
+                                    <div className="pt-6 border-t border-slate-700/30 space-y-3">
+                                        <div className="flex items-center gap-3 text-slate-400">
+                                            <div className="w-8 h-8 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                                              <UserIcon className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Contributor</p>
+                                              <p className="text-xs font-bold text-blue-400 truncate max-w-[180px]">{caption.profiles?.email || 'Anonymous System'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-slate-400">
+                                            <div className="w-8 h-8 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                                              <Calendar className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Published</p>
+                                              <p className="text-xs font-bold text-slate-300">
+                                                {new Date(caption.created_datetime_utc).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                              </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ))}
-                    {!captions?.length && <div className="p-8 text-center text-slate-500">No captions found</div>}
+                    {!captions?.length && (
+                        <div className="col-span-full py-32 text-center space-y-4">
+                            <div className="w-20 h-20 bg-slate-800 rounded-[2rem] flex items-center justify-center mx-auto border border-slate-700">
+                              <FileText className="w-8 h-8 text-slate-600" />
+                            </div>
+                            <p className="text-slate-500 font-medium italic">No captions have been curated yet.</p>
+                        </div>
+                    )}
                 </div>
             )}
-        </div>
+        </main>
     )
 }

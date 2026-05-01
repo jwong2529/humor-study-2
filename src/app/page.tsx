@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import AuthButton from '@/components/AuthButton'
 import DashboardCharts from '@/components/DashboardCharts'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, LayoutDashboard } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -68,44 +68,26 @@ export default async function AdminDashboard() {
     .slice(0, 5)
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-12">
+    <main className="p-8 space-y-12 max-w-[1600px] mx-auto animate-in fade-in duration-700">
       <header className="flex justify-between items-end">
-        <div>
-          <h2 className="text-3xl font-black tracking-tight text-white mb-2">Dashboard Overview</h2>
-          <p className="text-slate-400">Welcome to the Humor Study</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <LayoutDashboard className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tight">Intelligence Dashboard</h1>
+          </div>
+          <p className="text-slate-400 font-medium ml-[3.75rem]">Real-time metrics and humor study heuristics</p>
         </div>
-        <div className="pb-2 flex items-center gap-4">
-           <Link 
-             href="/analytics" 
-             className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-sm font-bold border border-slate-700 transition-all flex items-center gap-2"
-           >
-             <BarChart3 className="w-4 h-4" />
-             View Analytics
-           </Link>
-           <AuthButton user={user} />
+        <div className="text-right hidden md:block">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">System Status</p>
+          <div className="flex items-center gap-2 text-green-400 font-bold text-sm">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            Operational
+          </div>
         </div>
       </header>
 
-        {/* Global Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {[
-            { label: 'Total Users', value: userCount, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/30' },
-            { label: 'Total Images', value: imageCount, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/30' },
-            { label: 'Total Captions', value: captionCount, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/30' },
-            { label: 'Avg Likes', value: avgLikes, color: 'text-pink-400', bg: 'bg-pink-500/10 border-pink-500/30' },
-            { label: 'Engagements', value: sumLikes, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' }
-          ].map(stat => (
-            <div key={stat.label} className={`p-8 rounded-3xl border ${stat.bg} shadow-2xl backdrop-blur-sm relative overflow-hidden group hover:scale-[1.02] transition-transform`}>
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <h3 className="text-base font-bold text-slate-400 mb-2 uppercase tracking-widest">{stat.label}</h3>
-              <p className={`text-6xl font-black ${stat.color} filter drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]`}>
-                {stat.value ?? 0}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Charts Section */}
         <DashboardCharts topUsers={topUsers} imageStats={imageStats} />
 
         {/* Top Captions Section */}
@@ -138,6 +120,6 @@ export default async function AdminDashboard() {
             {!topCaptions?.length && <p className="text-slate-500 col-span-full">No captions yet.</p>}
           </div>
         </div>
-    </div>
+    </main>
   )
 }
